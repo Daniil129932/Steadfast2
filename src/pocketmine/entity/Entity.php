@@ -727,6 +727,12 @@ abstract class Entity extends Location implements Metadatable{
 	}
 
 	/**
+	 * @param Player $source
+	 */
+	public function rightClick($source) {
+	}
+
+	/**
 	 * @param float                   $amount
 	 * @param EntityRegainHealthEvent $source
 	 *

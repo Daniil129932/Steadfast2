@@ -1623,7 +1623,7 @@ class Player extends Human implements CommandSender, InventoryHolder, IPlayer{
 			$this->subClients[$packet->targetSubClientID]->handleDataPacket($packet);
 			return;
 		}
-		
+
 		switch($packet->pname()){
             case 'SET_PLAYER_GAMETYPE_PACKET':
                 file_put_contents("./logs/possible_hacks.log", date('m/d/Y h:i:s a', time()) . " SET_PLAYER_GAMETYPE_PACKET " . $this->username . PHP_EOL, FILE_APPEND | LOCK_EX);
@@ -1847,19 +1847,26 @@ class Player extends Human implements CommandSender, InventoryHolder, IPlayer{
 					case 'START_DESTROY_BLOCK':
 						$this->actionsNum['CRACK_BLOCK'] = 0;
 						if (!$this->isCreative()) {
-							$block = $this->level->getBlock(new Vector3($packet->x, $packet->y, $packet->z));
-							$breakTime = ceil($block->getBreakTime($this->inventory->getItemInHand()) * 20);
-							if ($breakTime > 0) {
-								$pk = new LevelEventPacket();
-								$pk->evid = LevelEventPacket::EVENT_START_BLOCK_CRACKING;
-								$pk->x = $packet->x;
-								$pk->y = $packet->y;
-								$pk->z = $packet->z;
-								$pk->data = (int) (65535 / $breakTime); // ????
-								$this->dataPacket($pk);
-								$viewers = $this->getViewers();
-								foreach ($viewers as $viewer) {
-									$viewer->dataPacket($pk);
+							$pos = new Vector3($packet->x, $packet->y, $packet->z);
+							$block = $this->level->getBlock($pos);
+							$ev = new PlayerInteractEvent($this, $this->inventory->getItemInHand(), $block, $packet->face, PlayerInteractEvent::LEFT_CLICK_BLOCK);
+							$this->server->getPluginManager()->callEvent($ev);
+
+							if(!$ev->isCancelled()) {
+								$block = $this->level->getBlock($pos);
+								$breakTime = ceil($block->getBreakTime($this->inventory->getItemInHand()) * 20);
+								if ($breakTime > 0) {
+									$pk = new LevelEventPacket();
+									$pk->evid = LevelEventPacket::EVENT_START_BLOCK_CRACKING;
+									$pk->x = $packet->x;
+									$pk->y = $packet->y;
+									$pk->z = $packet->z;
+									$pk->data = (int) (65535 / $breakTime); // ????
+									$this->dataPacket($pk);
+									$viewers = $this->getViewers();
+									foreach ($viewers as $viewer) {
+										$viewer->dataPacket($pk);
+									}
 								}
 							}
 						}
@@ -2493,10 +2500,7 @@ class Player extends Human implements CommandSender, InventoryHolder, IPlayer{
 						if ($packet->actionType == InventoryTransactionPacket::ITEM_USE_ON_ENTITY_ACTION_ATTACK) {
 							$this->attackByTargetId($packet->entityId);
 						} elseif($packet->actionType == InventoryTransactionPacket::ITEM_USE_ON_ENTITY_ACTION_INTERACT) {
-							$target = $this->level->getEntity($packet->entityId);
-							if ($target instanceof SignEntity) {
-								$this->attackByTargetId($packet->entityId);
-							}
+							$this->level->getEntity($packet->entityId)->rightClick($this);
 						}
 						break;
 					case InventoryTransactionPacket::TRANSACTION_TYPE_ITEM_USE:

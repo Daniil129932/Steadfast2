@@ -76,14 +76,12 @@ class SignEntity extends Entity {
 		return false;
 	}
 
-	public function attack($damage, EntityDamageEvent $source) {
-		if ($source instanceof EntityDamageByEntityEvent) {
-			$player = $source->getDamager();
-			if ($player instanceof Player) {
-				$item = Item::get(Item::AIR);
-				$this->level->useItemOn($this->sign, $item, 0, 0, 0, 0, $player);
-			}
-		}
+	/**
+	 * @param Player $player
+	 */
+	public function rightClick($player) {
+		$item = Item::get(Item::AIR);
+		$this->level->useItemOn($this->sign, $item, 0, 0, 0, 0, $player);
 	}
 
 	public function isNeedSaveOnChunkUnload() {
