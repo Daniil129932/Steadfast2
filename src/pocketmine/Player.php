@@ -2571,7 +2571,10 @@ class Player extends Human implements CommandSender, InventoryHolder, IPlayer{
 						if ($packet->actionType == InventoryTransactionPacket::ITEM_USE_ON_ENTITY_ACTION_ATTACK) {
 							$this->attackByTargetId($packet->entityId);
 						} elseif($packet->actionType == InventoryTransactionPacket::ITEM_USE_ON_ENTITY_ACTION_INTERACT) {
-							$this->level->getEntity($packet->entityId)->rightClick($this);
+							$target = $this->level->getEntity($packet->entityId);
+							if ($target instanceof Entity) {
+								$target->rightClick($this);
+							}
 						}
 						break;
 					case InventoryTransactionPacket::TRANSACTION_TYPE_ITEM_USE:
